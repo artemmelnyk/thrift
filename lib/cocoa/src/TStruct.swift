@@ -17,15 +17,15 @@
  * under the License.
  */
 
-import Foundation
 
-
+/// Protocol for Generated Structs to conform to
+/// Dictionary maps field names to internal IDs and uses Reflection
+/// to iterate through all fields.
+/// `writeFieldValue(_:name:type:id:)` calls `TSerializable.write(to:)` internally
+/// giving a nice recursive behavior for nested TStructs, TLists, TMaps, and TSets
 public protocol TStruct : TSerializable {
 }
 
-
 public extension TStruct {
-  
-  public static var thriftType : TType { return TType.STRUCT }
-  
+    public static var thriftType : TType { return TType.STRUCT }
 }

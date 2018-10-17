@@ -20,7 +20,16 @@
 import Foundation
 
 
-public struct TSet<Element : TSerializable> : CollectionType, ArrayLiteralConvertible, TSerializable {
+public struct TSet<Element : TSerializable> : Collection, ArrayLiteralConvertible, TSerializable {
+    
+    public func index(after i: Index) -> Index {
+        return storage.index(after: i)
+    }
+    
+    public func formIndex(after i: inout Storage.Index) {
+        storage.formIndex(after: &i)
+    }
+    
   
   public static var thriftType : TType { return .SET }
   
@@ -28,7 +37,7 @@ public struct TSet<Element : TSerializable> : CollectionType, ArrayLiteralConver
   
   typealias Storage = Set<Element>
   
-  private var storage : Storage
+  var storage : Storage
   
   public init() {
     storage = Storage()
@@ -38,28 +47,28 @@ public struct TSet<Element : TSerializable> : CollectionType, ArrayLiteralConver
     storage = Storage(elements)
   }
   
-  public init<S : SequenceType where S.Generator.Element == Element>(_ sequence: S) {
-    storage = Storage(sequence)    
-  }
+    public init<Source : Sequence>(_ sequence: Source) where Source.Iterator.Element == Element {
+        storage = Storage(sequence)
+    }
   
   public var startIndex : Index { return storage.startIndex }
   
   public var endIndex : Index { return storage.endIndex }
   
-  public mutating func insert(member: Element) {
-    return storage.insert(member)
-  }
+    public mutating func insert(_ newMember: Element) -> (inserted: Bool, memberAfterInsert: Element) {
+        return storage.insert(newMember)
+    }
   
   public mutating func remove(element: Element) -> Element? {
     return storage.remove(element)
   }
   
-  public mutating func removeAll(keepCapacity keepCapacity: Bool = false) {
-    return storage.removeAll(keepCapacity: keepCapacity)
+    public mutating func removeAll(keepCapacity: Bool = false) {
+    return storage.removeAll(keepingCapacity: keepCapacity)
   }
   
   public mutating func removeAtIndex(index: SetIndex<Element>) -> Element {
-    return storage.removeAtIndex(index)
+    return storage.remove(at: index)
   }
   
   public subscript (position: SetIndex<Element>) -> Element {
@@ -70,41 +79,9 @@ public struct TSet<Element : TSerializable> : CollectionType, ArrayLiteralConver
     return TSet(storage.union(other))
   }
   
-  public func intersect(other: TSet) -> TSet {
-    return TSet(storage.intersect(other))
-  }
-  
-  public func exclusiveOr(other: TSet) -> TSet {
-    return TSet(storage.exclusiveOr(other))
-  }
-  
-  public func subtract(other: TSet) -> TSet {
-    return TSet(storage.subtract(other))
-  }
-  
-  public mutating func intersectInPlace(other: TSet) {
-    storage.intersectInPlace(other)
-  }
-
-  public mutating func exclusiveOrInPlace(other: TSet) {
-    storage.exclusiveOrInPlace(other)
-  }
-
-  public mutating func subtractInPlace(other: TSet) {
-    storage.subtractInPlace(other)
-  }  
-
-  public func isSubsetOf(other: TSet) -> Bool {
-    return storage.isSubsetOf(other)
-  }
-
-  public func isDisjointWith(other: TSet) -> Bool {
-    return storage.isDisjointWith(other)
-  }
-  
-  public func isSupersetOf(other: TSet) -> Bool {
-    return storage.isSupersetOf(other)
-  }
+    public func intersection(_ other: TSet<Element>) -> TSet {
+        return TSet(storage.intersection(other.storage))
+    }
 
   public var isEmpty: Bool { return storage.isEmpty }
 
@@ -122,12 +99,12 @@ public struct TSet<Element : TSerializable> : CollectionType, ArrayLiteralConver
     if elementType != Element.thriftType {
       throw NSError(
         domain: TProtocolErrorDomain,
-        code: Int(TProtocolError.InvalidData.rawValue),
-        userInfo: [TProtocolErrorExtendedErrorKey: NSNumber(int: elementType.rawValue)])
+        code: Int(TProtocolError.invalidData.rawValue),
+        userInfo: [TProtocolErrorExtendedErrorKey: NSNumber(value: elementType.rawValue)])
     }
     var set = TSet()
     for _ in 0..<size {
-      let element = try Element.readValueFromProtocol(proto)
+        let element = try Element.readValueFromProtocol(proto: proto)
       set.storage.insert(element)
     }
     try proto.readSetEnd()
@@ -135,9 +112,9 @@ public struct TSet<Element : TSerializable> : CollectionType, ArrayLiteralConver
   }
   
   public static func writeValue(value: TSet, toProtocol proto: TProtocol) throws {
-    try proto.writeSetBeginWithElementType(Element.thriftType, size: value.count)
+    try proto.writeSetBeginWithElementType(elementType: Element.thriftType, size: value.count)
     for element in value.storage {
-      try Element.writeValue(element, toProtocol: proto)
+        try Element.writeValue(value: element, toProtocol: proto)
     }
     try proto.writeSetEnd()
   }

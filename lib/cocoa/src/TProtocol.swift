@@ -34,7 +34,7 @@ public extension TProtocol {
   }
   
   public func writeMessageBeginWithName(name: String, type: TMessageType, sequenceID: Int) throws {
-    try writeMessageBeginWithName(name, type: type.rawValue, sequenceID: Int32(sequenceID))
+    try writeMessageBegin(withName: name, type: type.rawValue, sequenceID: Int32(sequenceID))
   }
   
   public func readStructBegin() throws -> (String?) {
@@ -58,7 +58,7 @@ public extension TProtocol {
   }
   
   public func writeFieldBeginWithName(name: String, type: TType, fieldID: Int) throws {
-    try writeFieldBeginWithName(name, type: type.rawValue, fieldID: Int32(fieldID))
+    try writeFieldBegin(withName: name, type: type.rawValue, fieldID: Int32(fieldID))
   }
   
   public func readMapBegin() throws -> (TType, TType, Int32) {
@@ -73,7 +73,7 @@ public extension TProtocol {
   }
   
   public func writeMapBeginWithKeyType(keyType: TType, valueType: TType, size: Int) throws {
-    try writeMapBeginWithKeyType(keyType.rawValue, valueType: valueType.rawValue, size: Int32(size))
+    try writeMapBegin(withKeyType: keyType.rawValue, valueType: valueType.rawValue, size: Int32(size))
   }
   
   public func readSetBegin() throws -> (TType, Int32) {
@@ -87,7 +87,7 @@ public extension TProtocol {
   }
   
   public func writeSetBeginWithElementType(elementType: TType, size: Int) throws {
-    try writeSetBeginWithElementType(elementType.rawValue, size: Int32(size))
+    try writeSetBegin(withElementType: elementType.rawValue, size: Int32(size))
   }
   
   public func readListBegin() throws -> (TType, Int32) {
@@ -101,21 +101,21 @@ public extension TProtocol {
   }
   
   public func writeListBeginWithElementType(elementType: TType, size: Int) throws {
-    try writeListBeginWithElementType(elementType.rawValue, size: Int32(size))
+    try writeListBegin(withElementType: elementType.rawValue, size: Int32(size))
   }
   
   public func writeFieldValue<T: TSerializable>(value: T, name: String, type: TType, id: Int32) throws {
-    try writeFieldBeginWithName(name, type: type.rawValue, fieldID: id)
-    try writeValue(value)
+    try writeFieldBegin(withName: name, type: type.rawValue, fieldID: id)
+    try writeValue(value: value)
     try writeFieldEnd()
   }
   
   public func readValue<T: TSerializable>() throws -> T {
-    return try T.readValueFromProtocol(self)
+    return try T.readValueFromProtocol(proto: self)
   }
   
   public func writeValue<T: TSerializable>(value: T) throws {
-    try T.writeValue(value, toProtocol: self)
+    try T.writeValue(value: value, toProtocol: self)
   }
   
   public func readResultMessageBegin() throws {
@@ -135,16 +135,16 @@ public extension TProtocol {
     if value == nil {
       throw NSError(
         domain: TProtocolErrorDomain,
-        code: Int(TProtocolError.Unknown.rawValue),
+        code: Int(TProtocolError.unknown.rawValue),
         userInfo: [TProtocolErrorFieldNameKey: name])
     }
     
   }
   
-  public func readException() throws -> ErrorType {
+  public func readException() throws -> Error {
     
     var reason : String?
-    var type = TApplicationError.Unknown
+    var type = TApplicationError.unknown
     
     try readStructBegin()
     
@@ -166,7 +166,7 @@ public extension TProtocol {
         }
         
       case let (_, unknownType):
-        try skipType(unknownType)
+        try skipType(type: unknownType)
       }
       
       try readFieldEnd()
@@ -178,13 +178,13 @@ public extension TProtocol {
   }
   
   public func writeExceptionForMessageName(name: String, sequenceID: Int, ex: NSError) throws {
-    try writeMessageBeginWithName(name, type: .EXCEPTION, sequenceID: sequenceID)
+    try writeMessageBeginWithName(name: name, type: .EXCEPTION, sequenceID: sequenceID)
     try ex.write(self)
     try writeMessageEnd()
   }
   
   public func skipType(type: TType) throws {
-    try TProtocolUtil.skipType(type.rawValue, onProtocol: self)
+    try TProtocolUtil.skipType(type.rawValue, on: self)
   }
   
 }

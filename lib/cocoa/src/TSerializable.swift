@@ -32,12 +32,10 @@ public protocol TSerializable : Hashable {
   
 }
 
-
-
-infix operator ?== {}
+infix operator ?==
 
 public func ?==<T: TSerializable>(lhs: T?, rhs: T?) -> Bool {
-  if let l = lhs, r = rhs {
+    if let l = lhs, let r = rhs {
     return l == r
   }
   return lhs == rhs
@@ -51,23 +49,23 @@ public func ?==<T: TSerializable>(lhs: T, rhs: T) -> Bool {
 
 extension Bool : TSerializable {
   
-  public static let thriftType = TType.BOOL
+  public static var thriftType = TType.BOOL
   
   public static func readValueFromProtocol(proto: TProtocol) throws -> Bool {
     var value : ObjCBool = false
-    try proto.readBool(&value)
+    try proto.read(&value)
     return value.boolValue
   }
   
   public static func writeValue(value: Bool, toProtocol proto: TProtocol) throws {
-    try proto.writeBool(value)
+    try proto.write(value)
   }
   
 }
 
 extension Int8 : TSerializable {
   
-  public static let thriftType = TType.BYTE
+  public static var thriftType = TType.BYTE
   
   public static func readValueFromProtocol(proto: TProtocol) throws -> Int8 {
     var value = UInt8()
@@ -83,7 +81,7 @@ extension Int8 : TSerializable {
 
 extension Int16 : TSerializable {
   
-  public static let thriftType = TType.I16
+  public static var thriftType = TType.I16
   
   public static func readValueFromProtocol(proto: TProtocol) throws -> Int16 {
     var value = Int16()
@@ -99,7 +97,7 @@ extension Int16 : TSerializable {
 
 extension Int : TSerializable {
   
-  public static let thriftType = TType.I32
+  public static var thriftType = TType.I32
   
   public static func readValueFromProtocol(proto: TProtocol) throws -> Int {
     var value = Int32()
@@ -115,7 +113,7 @@ extension Int : TSerializable {
 
 extension Int32 : TSerializable {
   
-  public static let thriftType = TType.I32
+  public static var thriftType = TType.I32
   
   public static func readValueFromProtocol(proto: TProtocol) throws -> Int32 {
     var value = Int32()
@@ -131,7 +129,7 @@ extension Int32 : TSerializable {
 
 extension Int64 : TSerializable {
   
-  public static let thriftType = TType.I64
+  public static var thriftType = TType.I64
   
   public static func readValueFromProtocol(proto: TProtocol) throws -> Int64 {
     var value = Int64()
@@ -147,32 +145,32 @@ extension Int64 : TSerializable {
 
 extension Double : TSerializable {
   
-  public static let thriftType = TType.DOUBLE
+  public static var thriftType = TType.DOUBLE
   
   public static func readValueFromProtocol(proto: TProtocol) throws -> Double {
     var value = Double()
-    try proto.readDouble(&value)
+    try proto.read(&value)
     return value
   }
   
   public static func writeValue(value: Double, toProtocol proto: TProtocol) throws {
-    try proto.writeDouble(value)
+    try proto.write(value)
   }
   
 }
 
 extension String : TSerializable {
   
-  public static let thriftType = TType.STRING
+  public static var thriftType = TType.STRING
   
   public static func readValueFromProtocol(proto: TProtocol) throws -> String {
     var value : NSString?
-    try proto.readString(&value)
+    try proto.read(&value!)
     return value as! String
   }
   
   public static func writeValue(value: String, toProtocol proto: TProtocol) throws {
-    try proto.writeString(value)
+    try proto.write(value)
   }
   
 }

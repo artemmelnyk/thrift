@@ -24,79 +24,77 @@ public struct TBinary : TSerializable {
   
   public static var thriftType : TType { return .STRING }
   
-  private var storage : NSData
+  var storage : Data
   
   public init() {
-    self.storage = NSData()
+    self.storage = Data()
   }
   
-  public init(contentsOfFile file: String, options: NSDataReadingOptions = []) throws {
-    self.storage = try NSData(contentsOfFile: file, options: options)
+    public init(contentsOfFile file: String, options: Data.ReadingOptions = []) throws {
+    self.storage = try Data(contentsOf: URL(fileURLWithPath: file), options: options)
   }
   
-  public init(contentsOfURL URL: NSURL, options: NSDataReadingOptions = []) throws {
-    self.storage = try NSData(contentsOfURL: URL, options: options)
+    public init(contentsOfURL URL: URL, options: Data.ReadingOptions = []) throws {
+        self.storage = try Data(contentsOf: URL, options: options)
   }
   
-  public init?(base64EncodedData base64Data: NSData, options: NSDataBase64DecodingOptions = []) {
-    guard let storage = NSData(base64EncodedData: base64Data, options: options) else {
+    public init?(base64EncodedData base64Data: Data, options: Data.Base64DecodingOptions = []) {
+        guard let storage = Data(base64Encoded: base64Data, options: options) else {
       return nil
     }
     self.storage = storage
   }
   
-  public init(data: NSData) {
+  public init(data: Data) {
     self.storage = data
   }
   
   public var length : Int {
-    return storage.length
+    return storage.count
   }
   
   public var hashValue : Int {
     return storage.hashValue
   }
+
   
-  public var bytes : UnsafePointer<Void> {
-    return storage.bytes
+  public func getBytes(buffer: UnsafeMutablePointer<UInt8>, length: Int) {
+    storage.copyBytes(to: buffer, count: length)
   }
   
-  public func getBytes(buffer: UnsafeMutablePointer<Void>, length: Int) {
-    storage.getBytes(buffer, length: length)
-  }
-  
-  public func getBytes(buffer: UnsafeMutablePointer<Void>, range: Range<Int>) {
-    storage.getBytes(buffer, range: NSRange(range))
+  public func getBytes(buffer: UnsafeMutablePointer<UInt8>, range: Range<Int>) {
+    storage.copyBytes(to: buffer, from: Range(range))
   }
   
   public func subBinaryWithRange(range: Range<Int>) -> TBinary {
-    return TBinary(data: storage.subdataWithRange(NSRange(range)))
+    return TBinary(data: storage.subdata(in: Range(range)))
   }
   
-  public func writeToFile(path: String, options: NSDataWritingOptions = []) throws {
-    try storage.writeToFile(path, options: options)
+    public func writeToFile(path: String, options: Data.WritingOptions = []) throws {
+    try storage.write(to: URL(string: path)!, options: options)
   }
   
-  public func writeToURL(url: NSURL, options: NSDataWritingOptions = []) throws {
-    try storage.writeToURL(url, options: options)
+    public func writeToURL(url: URL, options: Data.WritingOptions = []) throws {
+    try storage.write(to: url, options: options)
   }
   
-  public func rangeOfData(dataToFind data: NSData, options: NSDataSearchOptions, range: Range<Int>) -> Range<Int>? {
-    return storage.rangeOfData(data, options: options, range: NSRange(range)).toRange()
+    public func rangeOfData(dataToFind data: Data, options: Data.SearchOptions, range: Range<Int>) -> Range<Int>? {
+        return storage.range(of:data, options:options, in:Range(range))
   }
   
-  public func enumerateByteRangesUsingBlock(block: (UnsafePointer<Void>, Range<Int>, inout Bool) -> Void) {
-    storage.enumerateByteRangesUsingBlock { bytes, range, stop in
-      var stopTmp = Bool(stop.memory)
-      block(bytes, range.toRange()!, &stopTmp)
-      stop.memory = ObjCBool(stopTmp)
+  public func enumerateByteRangesUsingBlock(block: (UnsafeBufferPointer<UInt8>, Data.Index, inout Bool) -> Void) {
+    storage.enumerateBytes { (bytes, range, stop) in
+        var stopTmp = Bool(stop)
+        block(bytes, range, &stopTmp)
+        stop = stopTmp
     }
+
   }
   
   public static func readValueFromProtocol(proto: TProtocol) throws -> TBinary {
     var data : NSData?
-    try proto.readBinary(&data)
-    return TBinary(data: data!)
+    try proto.readBinary(&data!)
+    return TBinary(data: data! as Data)
   }
   
   public static func writeValue(value: TBinary, toProtocol proto: TProtocol) throws {

@@ -20,7 +20,12 @@
 import Foundation
 
 
-public struct TMap<Key : TSerializable, Value : TSerializable> : CollectionType, DictionaryLiteralConvertible, TSerializable {
+public struct TMap<Key : TSerializable, Value : TSerializable> : Collection, DictionaryLiteralConvertible, TSerializable {
+    
+    public func index(after i: Index) -> Index {
+        return storage.index(after: i)
+    }
+    
   
   public static var thriftType : TType { return .MAP }
 
@@ -30,7 +35,7 @@ public struct TMap<Key : TSerializable, Value : TSerializable> : CollectionType,
 
   public typealias Element = Storage.Element
   
-  private var storage : Storage
+  var storage : Storage
 
   public var startIndex : Index {
     return storage.startIndex
@@ -47,10 +52,19 @@ public struct TMap<Key : TSerializable, Value : TSerializable> : CollectionType,
   public var values: LazyMapCollection<[Key : Value], Value> {
     return storage.values
   }
+    
+    public var dictionary: [Key: Value] {
+        return storage
+    }
   
   public init() {
     storage = Storage()
   }
+    
+    /// init from Dictionary<K,V>
+    public init(_ dict: [Key: Value]) {
+        storage = dict
+    }
   
   public init(dictionaryLiteral elements: (Key, Value)...) {
     storage = Storage()
@@ -69,9 +83,9 @@ public struct TMap<Key : TSerializable, Value : TSerializable> : CollectionType,
     }
   }
   
-  public func indexForKey(key: Key) -> Index? {
-    return storage.indexForKey(key)
-  }
+    public func indexForKey(_ key: Key) -> Index? {
+        return storage.index(forKey: key)
+    }
   
   public subscript (key: Key) -> Value? {
     get {
@@ -82,20 +96,20 @@ public struct TMap<Key : TSerializable, Value : TSerializable> : CollectionType,
     }
   }
 
-  public mutating func updateValue(value: Value, forKey key: Key) -> Value? {
-    return updateValue(value, forKey: key)
-  }
+    public mutating func updateValue(_ value: Value, forKey key: Key) -> Value? {
+        return updateValue(value, forKey: key)
+    }
+    
+    public mutating func removeAtIndex(_ index: DictionaryIndex<Key, Value>) -> (Key, Value) {
+        return removeAtIndex(index)
+    }
+    
+    public mutating func removeValueForKey(_ key: Key) -> Value? {
+        return storage.removeValue(forKey: key)
+    }
   
-  public mutating func removeAtIndex(index: DictionaryIndex<Key, Value>) -> (Key, Value) {
-    return removeAtIndex(index)
-  }
-  
-  public mutating func removeValueForKey(key: Key) -> Value? {
-    return storage.removeValueForKey(key)
-  }
-  
-  public mutating func removeAll(keepCapacity keepCapacity: Bool = false) {
-    storage.removeAll(keepCapacity: keepCapacity)
+    public mutating func removeAll(keepCapacity: Bool = false) {
+    storage.removeAll(keepingCapacity: keepCapacity)
   }
 
   public var hashValue : Int {
@@ -113,13 +127,13 @@ public struct TMap<Key : TSerializable, Value : TSerializable> : CollectionType,
     if keyType != Key.thriftType || valueType != Value.thriftType {
       throw NSError(
         domain: TProtocolErrorDomain,
-        code: Int(TProtocolError.InvalidData.rawValue),
-        userInfo: [TProtocolErrorExtendedErrorKey: NSNumber(int: TProtocolExtendedError.UnexpectedType.rawValue)])
+        code: Int(TProtocolError.invalidData.rawValue),
+        userInfo: [TProtocolErrorExtendedErrorKey: NSNumber(value: TProtocolExtendedError.unexpectedType.rawValue)])
     }
     var map = TMap()
     for _ in 0..<size {
-      let key = try Key.readValueFromProtocol(proto)
-      let value = try Value.readValueFromProtocol(proto)
+        let key = try Key.readValueFromProtocol(proto: proto)
+        let value = try Value.readValueFromProtocol(proto: proto)
       map.storage[key] = value
     }
     try proto.readMapEnd()
@@ -127,10 +141,10 @@ public struct TMap<Key : TSerializable, Value : TSerializable> : CollectionType,
   }
   
   public static func writeValue(value: TMap, toProtocol proto: TProtocol) throws {
-    try proto.writeMapBeginWithKeyType(Key.thriftType, valueType: Value.thriftType, size: value.count)
+    try proto.writeMapBeginWithKeyType(keyType: Key.thriftType, valueType: Value.thriftType, size: value.count)
     for (key, value) in value.storage {
-      try Key.writeValue(key, toProtocol: proto)
-      try Value.writeValue(value, toProtocol: proto)
+        try Key.writeValue(value: key, toProtocol: proto)
+        try Value.writeValue(value: value, toProtocol: proto)
     }
     try proto.writeMapEnd()
   }
