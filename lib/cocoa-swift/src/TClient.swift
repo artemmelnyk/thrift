@@ -22,7 +22,7 @@ open class TClient {
   public let inProtocol: TProtocol
   public let outProtocol: TProtocol
 
-  public init(inoutProtocol: TProtocol) {
+  required public init(inoutProtocol: TProtocol) {
     self.inProtocol = inoutProtocol
     self.outProtocol = inoutProtocol
   }

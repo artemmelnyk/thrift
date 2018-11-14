@@ -16,7 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 import Foundation
 
 
@@ -163,14 +162,14 @@ extension String : TSerializable {
   
   public static var thriftType = TType.STRING
   
-  public static func readValueFromProtocol(proto: TProtocol) throws -> String {
-    var value : NSString?
-    try proto.read(&value!)
-    return value as! String
-  }
-  
-  public static func writeValue(value: String, toProtocol proto: TProtocol) throws {
-    try proto.write(value)
-  }
+    public static func readValueFromProtocol(proto: TProtocol) throws -> String {
+        var value = NSString()
+        try proto.read(&value)
+        return value as! String
+    }
+    
+    public static func writeValue(value: String, toProtocol proto: TProtocol) throws {
+        try proto.write(value)
+    }
   
 }
